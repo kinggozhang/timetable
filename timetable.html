@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html>
+<title>W3.CSS</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+	<link rel="stylesheet" type="text/css" href="http://www.jeasyui.com/easyui/themes/default/easyui.css">
+	<link rel="stylesheet" type="text/css" href="http://www.jeasyui.com/easyui/themes/icon.css">
+	<link rel="stylesheet" type="text/css" href="http://www.jeasyui.com/easyui/demo/demo.css">
+	<script type="text/javascript" src="https://cdn.staticfile.org/jquery/1.6.1/jquery.min.js"></script>
+	<script type="text/javascript" src="http://www.jeasyui.com/easyui/jquery.easyui.min.js"></script>
+	<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script>
+if(!AV.applicationId)
+{
+AV.init({
+  appId: '3SU3NFnWRerFaQFBIiMsRuta-gzGzoHsz',
+  appKey: 'zI1dqx2jIXoshpDKl4X5iXeK'
+});
+}
+function randomPassword(size)
+{
+  var seed = new Array('A','B','C','D','E','F','G','H','I','J','K','L','M','N','P','Q','R','S','T','U','V','W','X','Y','Z',
+  'a','b','c','d','e','f','g','h','i','j','k','m','n','p','Q','r','s','t','u','v','w','x','y','z',
+  '2','3','4','5','6','7','8','9'
+  );//数组
+  seedlength = seed.length;//数组长度
+  var createPassword = '';
+  for (i=0;i<size;i++) {
+    j = Math.floor(Math.random()*seedlength);
+    createPassword += seed[j];
+  }
+  return createPassword;
+}
+function createNew(tstr,cstr,rstr)
+{
+ // 声明一个 Counter 类型
+  var TimeTable = AV.Object.extend('TimeTable');
+  // 新建一个 Counter 对象
+  var timeTable = new TimeTable();
+  var rpass = randomPassword(6);
+  timeTable.set('passwd', rpass);
+  timeTable.set('teacher', tstr);
+  timeTable.set('class', cstr);
+  timeTable.set('room', rstr);
+  
+  timeTable.save().then(function (tt) {
+    // 成功保存之后，执行其他逻辑.
+    console.log('New object created with pass: ' + rpass);
+	pass = rpass;
+  }, function (error) {
+    // 异常处理
+    console.error('Failed to create new object, with error message: ' + error.message);
+  });
+}
+function setupLists(tstr,cstr,rstr)
+{
+
+}
+var pass='';
+function loadFromCloud()
+{
+
+var passele=document.getElementById('passwd');
+pass = passele.value;
+  var query = new AV.Query('TimeTable');
+  query.equalTo('passwd', pass);
+  query.find().then(function (results) {
+      if(results.length > 0)
+	  {
+	  var tstr=results[0].get('teacher');
+	  var cstr=results[0].get('class');
+	  var rstr=results[0].get('room');
+	  setupLists(tstr,cstr,rstr);
+	  }
+	  else
+	  {
+	  alert("未找到记录");
+	  }
+  }, function (error) {
+      
+	 console.error('Failed to find object, with error message: ' + error.message);
+  });
+}
+function saveToCloud(tstr,cstr,rstr)
+{
+var passele=document.getElementById('passwd');
+pass = passele.value;
+  var query = new AV.Query('TimeTable');
+  query.equalTo('passwd', pass);
+  query.find().then(function (results) {
+      if(results.length > 0)
+	  {
+	  
+  results[0].set('teacher', tstr);
+  results[0].set('class', cstr);
+  results[0].set('room', rstr);
+	  results[0].save().then(function (tt) {});
+	  document.getElementById('result').innerHTML='保存成功';
+	  }
+	  else
+	  {
+	  createNew(tstr,cstr,rstr);
+	   document.getElementById('result').innerHTML='新建云记录';
+	  }
+  }, function (error) {
+      
+	 console.error('Failed to find object, with error message: ' + error.message);
+  });
+    
+}
+function getMinute(timestr)
+{
+   if(timestr.indexOf(':') == -1)
+   {
+      return Number(timestr)*60;
+   }
+   else
+   {
+      var hms = timestr.split(':');
+	  var min = Number(hms[0])*60;
+	  min += Number(hms[1]);
+	  return min;
+   }
+}
+function createRow(cat){
+
+var input = document.getElementById(cat+"input");
+
+var list = document.getElementById(cat+"list");
+var li=document.createElement("li");
+if(input.value.length <= 0)
+   return;
+var inputxt = input.value;
+inputxt.replace("：",':');
+if(cat == 'class')
+{
+   var classtxt = inputxt;
+   var strs = classtxt.split(' ');
+   li.name=cat+"name";
+   
+   li.innerHTML=classtxt;
+   li.timerange=strs[1];
+   
+   var startm=0;
+   var endm =0;
+   //validate timerange
+   var idx = strs[1].indexOf('-');
+   if(idx != -1)
+   {
+   var times=strs[1].split('-');
+   startm=getMinute(times[0]);
+   endm=getMinute(times[1]);
+   li.effortm=endm-startm;
+   }
+   
+}
+else
+{
+li.name=cat+"name";
+li.innerHTML=input.value;
+}
+input.value='';
+var checkbox=document.createElement("input");
+	checkbox.type="checkbox";
+	checkbox.name=cat+"checkRow";
+li.appendChild(checkbox);
+list.appendChild(li);
+}
+
+function delRow(cat){
+	var editTable=document.getElementById(cat+"list");
+	if(1){
+		var checkboxs=document.getElementsByName(cat+"checkRow");
+		for(var i=0;i<checkboxs.length;i++){
+			if(checkboxs[i].checked){
+				var n=checkboxs[i].parentNode;
+				editTable.removeChild(n);
+				i--;
+			}
+		}
+		
+	}
+}
+
+function listclasses(cat)
+{
+		var editTable=document.getElementById(cat+"list");
+		
+		for(var i=0;i<editTable.children.length;i++){
+		console.log(editTable.children[i].innerText);
+		}
+
+}
+function generate()
+{
+createTeacherFlist();
+var roomcnt= createRoomFlist();
+createClassFList(roomcnt);
+
+        var counts = [];
+        var efforts = [];
+		$(function(){
+			$('.left .item').draggable({
+				revert:true,
+				proxy:'clone'
+			});
+            $('.right .item').draggable({
+				revert:true
+			});
+			$('.right td.drop').droppable({
+				onDragEnter:function(){
+					$(this).addClass('over');
+				},
+				onDragLeave:function(){
+					$(this).removeClass('over');
+				},
+				onDrop:function(e,source){
+					$(this).removeClass('over');
+					if ($(source).hasClass('assigned')){
+                    
+                        //switch;
+                        var child = this.childNodes[0];
+                        if(child && source.parentNode )
+                        {
+                           child.effort = source.effort;
+                           source.parentNode.append(child);
+                           source.effort = child.effort;
+                        }
+						$(this).append(source);
+					} else {
+                        if(counts[source.innerHTML])
+                            counts[source.innerHTML] += 1;
+                        else
+                            counts[source.innerHTML] = 1;
+                           
+                        if(efforts[source.innerHTML])
+                           efforts[source.innerHTML] += Number(this.id);
+                        else
+                           efforts[source.innerHTML] = Number(this.id);
+                           
+                        
+                        console.log(source.id);
+                        console.log(this.id);
+                        console.log(counts[source.innerHTML]);
+                        document.getElementById(source.id + "c").innerHTML = counts[source.innerHTML]+"(" + efforts[source.innerHTML] + ")";
+						var c = $(source).clone();
+                        c.addClass('assigned');
+                        c[0].effort = this.id;
+						$(this).empty().append(c);
+						c.draggable({
+							revert:true
+						});
+					}
+				}
+			});
+			$('.left').droppable({
+				accept:'.assigned',
+				onDragEnter:function(e,source){
+					$(source).addClass('trash');
+				},
+				onDragLeave:function(e,source){
+					$(source).removeClass('trash');
+				},
+				onDrop:function(e,source){
+					
+                    counts[source.innerHTML] -= 1;
+                    efforts[source.innerHTML] -= Number(source.effort);
+                    console.log(counts[source.innerHTML]);
+                    document.getElementById(source.id + "c").innerHTML = counts[source.innerHTML]+"(" + efforts[source.innerHTML] + ")";                    
+                    $(source).remove();
+				}
+			});
+		});
+}
+function createRoomFlist()
+{
+var classtbl = document.getElementById('classflist');
+var len = classtbl.children.length;
+for(var i=len-1;i>=0;i--)
+{
+	classtbl.removeChild(classtbl.children[i]);
+}
+var roottr=document.createElement("tr");
+
+if(roottr)
+{
+   var td=document.createElement("td");
+   td.className="blank";
+   td.innerText="科目";
+   roottr.appendChild(td);
+   td=document.createElement("td");
+   td.className="title";
+   td.innerText="主考";
+   roottr.appendChild(td);   
+	var editTable=document.getElementById("roomlist");
+
+	for(var i=0;i<editTable.children.length;i++)
+	{
+	td=document.createElement("td");
+	td.className="title";
+	td.innerText=editTable.children[i].innerText;
+	roottr.appendChild(td);
+	}
+	classtbl.appendChild(roottr);
+    return editTable.children.length+1;
+}
+}
+function createClassFList(roomcnt)
+{
+  var classtbl = document.getElementById('classflist');
+  if(classtbl)
+  {
+	    var editTable=document.getElementById("classlist");
+
+		for(var i=0;i<editTable.children.length;i++){
+		    var tr=document.createElement("tr");
+			var td=document.createElement("td");
+			td.className="time";
+			td.innerText=editTable.children[i].innerText;
+			tr.appendChild(td);
+			
+			for(var j=0;j<roomcnt;j++)
+			{
+			td=document.createElement("td");
+			if(j == 0)
+			  td.id="60";
+			else
+			  td.id=editTable.children[i].effortm;
+			td.className='drop';
+			tr.appendChild(td);
+			}
+			classtbl.appendChild(tr);
+		}
+		
+		
+  }
+}
+function createTeacherFlist()
+{
+var listc = document.getElementById('teacherflist');
+var tlist = document.getElementById('teacherslist');
+var len = listc.children.length;
+for(var i=len-1;i>=0;i--)
+{
+    listc.removeChild(listc.children[i]);
+}
+len = tlist.children.length;
+for(var i=len-1;i>=0;i--)
+{
+    tlist.removeChild(tlist.children[i]);
+}
+		var editTable=document.getElementById("teacherlist");
+		
+		for(var i=0;i<editTable.children.length;i++){
+		
+		var tr=document.createElement("tr");
+		var td=document.createElement("td");
+		td.innerHTML ="<div id='"+(500+i)+"c' class='itemc'>0</div>"
+		tr.appendChild(td);
+		listc.appendChild(tr);
+		tr=document.createElement("tr");
+		td=document.createElement("td");
+		var div=document.createElement("div");
+		div.id=""+(500+i);
+		div.className="item";
+		td.appendChild(div);
+		tr.appendChild(td);
+		div.innerHTML = editTable.children[i].innerText;
+		tlist.appendChild(tr);
+		
+		}
+}
+
+</script>
+<body>
+<table class="w3-table w3-striped w3-border">
+<tr>
+<td valign='top'>
+<div class="w3-container">
+  <h2>监考教师</h2>
+  <input type="text" id="teacherinput"></input>
+  <button onclick="createRow('teacher')">新增</button>
+  <button onclick="delRow('teacher')">移除</button>
+  
+  <ul id="teacherlist" class="w3-ul w3-large">
+  </ul>
+</div>
+</td>
+<td valign='top'>
+<div class="w3-container">
+  <h2>科目</h2>
+  <input type="text" placeholder="例:语文 13:00-14:00" id="classinput"></input>
+  <button onclick="createRow('class')">新增</button>
+  <button onclick="delRow('class')">移除</button>
+  
+  <ul id="classlist" class="w3-ul w3-large">
+
+  </ul>
+</div>
+</td>
+<td valign='top'>
+<div class="w3-container">
+  <h2>考场</h2>
+  <input type="text" id="roominput"></input>
+  <button onclick="createRow('room')">新增</button>
+  <button onclick="delRow('room')">移除</button>
+  
+  <ul id="roomlist" class="w3-ul w3-large">
+
+  </ul>
+</div>
+</td>
+</tr>
+</table>
+<button onclick="generate()">生成</button><button onclick="saveToCloud()">保存到云</button><button onclick="loadFromCloud()">云加载</button>
+	<div style="width:1200px;">
+		<div class="leftc">
+			<table id="teacherflist">
+
+
+
+			</table>
+		</div>
+		<div class="left">
+			<table id="teacherslist">
+
+
+			</table>
+		</div>        
+		<div class="right">
+			<table id="classflist">
+
+			</table>
+		</div>
+	</div>
+
+
+	<style type="text/css">
+    	.leftc{
+			width:60px;
+			float:left;
+		}
+		.leftc table{
+			background:#E0ECFF;
+		}
+		.leftc td{
+			background:#eee;
+		}
+        .itemc{
+			text-align:center;
+			border:1px solid #499B33;
+			background:#fafafa;
+			color:#888;
+			width:50px;
+			height:20px;
+		}
+		.left{
+			width:120px;
+			float:left;
+		}
+		.left table{
+			background:#E0ECFF;
+		}
+		.left td{
+			background:#eee;
+		}
+		.right{
+			float:left;
+			width:870px;
+		}
+		.right table{
+			background:#E0ECFF;
+			width:100%;
+		}
+		.right td{
+			background:#fafafa;
+			color:#444;
+			text-align:center;
+			padding:2px;
+		}
+        .time{
+          width:200px;
+        }
+		.right td{
+			background:#E0ECFF;
+		}
+		.right td.drop{
+			background:#fafafa;
+			width:100px;
+		}
+		.right td.over{
+			background:#FBEC88;
+		}
+		.item{
+			text-align:center;
+			border:1px solid #499B33;
+			background:#fafafa;
+			color:#444;
+			width:100px;
+			height:20px;
+		}
+		.assigned{
+			border:1px solid #BC2A4D;
+		}
+		.trash{
+			background-color:red;
+		}
+		
+	</style>
+	<script>
+    
+
+	</script>
+</body>
+</html> 
